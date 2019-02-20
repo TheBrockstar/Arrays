@@ -39,13 +39,22 @@ void destroy_array(Array *arr) {
 
   // Free all elements
   for (int i = 0; i < arr -> count; i++) {
-    free(arr -> elements[i]);
+    if (arr -> elements[i] != NULL) {
+      free(arr -> elements[i]);
+    } else {
+      break;
+    }
   }
 
-  free(arr -> elements);
+  if (arr -> elements != NULL) {
+    free(arr -> elements);
+  }
 
   // Free array
-  free(arr);  
+  if (arr != NULL) {
+    free(arr);  
+  }
+
 }
 
 /*****
@@ -55,17 +64,16 @@ void destroy_array(Array *arr) {
 void resize_array(Array *arr) {
 
   // Create a new element storage with double capacity
-  char **doubleElements = malloc(2 * sizeof(arr -> elements));
+  char **doubleElements = malloc(2 * (arr -> capacity) * sizeof(char *));
 
   // Copy elements into the new storage
-  memcpy(doubleElements, arr -> elements, sizeof(arr -> elements));
+  memcpy(doubleElements, arr -> elements, (arr -> capacity) * sizeof(char *));
 
   // Free the old elements array (but NOT the strings they point to)
   free(arr -> elements);
 
   // Update the elements and capacity to new values
   arr -> elements = doubleElements;
-
 }
 
 
@@ -81,11 +89,17 @@ void resize_array(Array *arr) {
  *
  * Throw an error if the index is out of range.
  *****/
+
 char *arr_read(Array *arr, int index) {
 
   // Throw an error if the index is greater than the current count
-
+  if (index > arr -> count - 1) {
+    printf("ERROR: Index out of bounds.");
+    exit(0);
+  } else {
   // Otherwise, return the element at the given index
+    printf("%s", arr -> elements[index]);
+  }
 }
 
 
@@ -95,15 +109,26 @@ char *arr_read(Array *arr, int index) {
 void arr_insert(Array *arr, char *element, int index) {
 
   // Throw an error if the index is greater than the current count
+    if (index > arr -> count - 1 || index < 0) {
+      printf("ERROR: Index out of bounds.");
+      exit(0);
+    }
 
   // Resize the array if the number of elements is over capacity
+    if (arr -> count + 1 > arr -> capacity) {
+      resize_array(arr);
+    }
 
   // Move every element after the insert index to the right one position
+    for (int i = arr -> count - 1; i >= index; i--) {
+      arr -> elements[i + 1] = arr -> elements[i];
+    }
 
   // Copy the element and add it to the array
+    arr -> elements[index] = strdup(element);
 
   // Increment count by 1
-
+  arr -> count++;
 }
 
 /*****
@@ -113,10 +138,15 @@ void arr_append(Array *arr, char *element) {
 
   // Resize the array if the number of elements is over capacity
   // or throw an error if resize isn't implemented yet.
+  if (arr -> count + 1 > arr -> capacity) {
+    resize_array(arr);
+  }
 
   // Copy the element and add it to the end of the array
+  arr -> elements[arr -> count] = strdup(element);
 
   // Increment count by 1
+  arr -> count++;
 
 }
 
@@ -144,8 +174,8 @@ void arr_remove(Array *arr, char *element) {
 void arr_print(Array *arr) {
   printf("[");
   for (int i = 0 ; i < arr->count ; i++) {
-    printf("%s", arr->elements[i]);
-    if (i != arr->count - 1) {
+    printf("%s", arr -> elements[i]);
+    if (i != arr -> count - 1) {
       printf(",");
     }
   }
@@ -157,7 +187,9 @@ void arr_print(Array *arr) {
 int main(void)
 {
 
-  Array *arr = create_array(1);
+  Array *arr = create_array(3);
+
+  printf("%i - %i\n", arr -> capacity, arr -> count);
 
   arr_insert(arr, "STRING1", 0);
   arr_append(arr, "STRING4");
@@ -168,6 +200,8 @@ int main(void)
   arr_print(arr);
 
   destroy_array(arr);
+
+
 
   return 0;
 }
